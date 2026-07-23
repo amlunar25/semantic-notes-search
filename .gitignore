@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# Local database
+storage/lancedb/
+
+# Model and OS artifacts
+.DS_Store
+*.log
+
+# Coverage
+.coverage
+htmlcov/
