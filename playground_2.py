@@ -7,9 +7,7 @@ from semantic_notes.ingestion.document_loader import (
 
 loader = MarkdownDocumentLoader()
 
-documents = loader.load_directory(
-    Path("data/notes")
-)
+documents = loader.load_directory(Path("data/notes"))
 
 chunker = TextChunker(
     chunk_size=100,

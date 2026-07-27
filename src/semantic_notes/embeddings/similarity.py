@@ -38,9 +38,7 @@ def vector_magnitude(vector: Sequence[float]) -> float:
         = 5
     """
 
-    return math.sqrt(
-        sum(value * value for value in vector)
-    )
+    return math.sqrt(sum(value * value for value in vector))
 
 
 def cosine_similarity(
@@ -62,10 +60,7 @@ def cosine_similarity(
     magnitude_b = vector_magnitude(vector_b)
 
     if magnitude_a == 0 or magnitude_b == 0:
-        raise ValueError(
-            "Cosine similarity cannot be calculated "
-            "for a zero-length vector."
-        )
+        raise ValueError("Cosine similarity cannot be calculated for a zero-length vector.")
 
     return dot_product(
         vector_a,

@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     lancedb_path: Path = Path("storage/lancedb")
     lancedb_table: str = "notes"
 
+    manifest_path: Path = Path("storage/index_manifest.json")
+
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     chunk_size: int = Field(default=500, ge=100)

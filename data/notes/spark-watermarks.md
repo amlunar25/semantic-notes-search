@@ -11,3 +11,6 @@ They help prevent streaming state from growing without limits.
 A watermark does not automatically discard every event that is more than
 10 minutes late. The exact behavior depends on the aggregation, window
 boundary, trigger, and current maximum observed event time.
+
+A watermark is based on the maximum event time observed by the query,
+not the computer's current clock time.

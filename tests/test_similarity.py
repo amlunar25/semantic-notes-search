@@ -17,9 +17,7 @@ def test_dot_product() -> None:
 
 
 def test_vector_magnitude() -> None:
-    result = vector_magnitude(
-        [3.0, 4.0]
-    )
+    result = vector_magnitude([3.0, 4.0])
 
     assert result == pytest.approx(5.0)
 

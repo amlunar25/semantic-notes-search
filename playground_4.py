@@ -1,9 +1,7 @@
 from semantic_notes.config import settings
 from semantic_notes.embeddings.encoder import EmbeddingEncoder
 
-encoder = EmbeddingEncoder(
-    settings.embedding_model
-)
+encoder = EmbeddingEncoder(settings.embedding_model)
 
 texts = [
     "Spark processes late events with watermarks.",

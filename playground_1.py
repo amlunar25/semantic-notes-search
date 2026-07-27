@@ -6,9 +6,7 @@ from semantic_notes.ingestion.document_loader import (
 
 loader = MarkdownDocumentLoader()
 
-documents = loader.load_directory(
-    Path("data/notes")
-)
+documents = loader.load_directory(Path("data/notes"))
 
 for document in documents:
     print("TITLE:", document.title)

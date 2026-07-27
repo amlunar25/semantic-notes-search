@@ -2,6 +2,7 @@ import hashlib
 import re
 
 from semantic_notes.models import Document, DocumentChunk
+from semantic_notes.ingestion.paths import normalize_source_path
 
 
 class TextChunker:
@@ -51,7 +52,7 @@ class TextChunker:
                     content=content,
                 ),
                 document_id=document_id,
-                source=str(document.source_path),
+                source=normalize_source_path(document.source_path),
                 title=document.title,
                 chunk_index=chunk_index,
                 content=content,

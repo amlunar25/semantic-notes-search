@@ -16,6 +16,16 @@ from semantic_notes.embeddings.comparator import (
 from semantic_notes.embeddings.similarity import (
     vector_magnitude,
 )
+from semantic_notes.database.notes_repository import (
+    NotesRepository,
+)
+from semantic_notes.ingestion.change_detector import (
+    DocumentChangeDetector,
+)
+from semantic_notes.ingestion.manifest import (
+    ManifestRepository,
+)
+
 
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -109,21 +119,35 @@ def run_index() -> None:
         chunk_overlap=settings.chunk_overlap,
     )
 
-    indexer = NotesIndexer(
+    notes_repository = NotesRepository(
         database=database,
-        encoder=encoder,
-        loader=loader,
-        chunker=chunker,
         table_name=settings.lancedb_table,
     )
 
-    indexed_chunks = indexer.index_directory(settings.notes_path)
+    manifest_repository = ManifestRepository(
+        manifest_path=settings.manifest_path,
+    )
 
-    print("Indexing completed successfully.")
-    print(f"Notes directory: {settings.notes_path}")
-    print(f"Database path: {settings.lancedb_path}")
-    print(f"Table: {settings.lancedb_table}")
-    print(f"Indexed chunks: {indexed_chunks}")
+    change_detector = DocumentChangeDetector()
+
+    indexer = NotesIndexer(
+        notes_repository=notes_repository,
+        manifest_repository=manifest_repository,
+        encoder=encoder,
+        loader=loader,
+        chunker=chunker,
+        change_detector=change_detector,
+    )
+
+    result = indexer.index_directory(settings.notes_path)
+
+    print("\nIncremental indexing completed.")
+    print("=" * 60)
+    print(f"New documents:       {result.new_documents}")
+    print(f"Changed documents:   {result.changed_documents}")
+    print(f"Unchanged documents: {result.unchanged_documents}")
+    print(f"Deleted documents:   {result.deleted_documents}")
+    print(f"Embedded chunks:     {result.embedded_chunks}")
 
 
 def run_search(query: str, limit: int) -> None:
@@ -162,6 +186,7 @@ def run_search(query: str, limit: int) -> None:
         print(result.content)
         print()
 
+
 def run_info() -> None:
     database = connect_database(settings.lancedb_path)
 
@@ -174,6 +199,7 @@ def run_info() -> None:
     print(f"Chunk size: {settings.chunk_size}")
     print(f"Chunk overlap: {settings.chunk_overlap}")
     print(f"Default search limit: {settings.search_limit}")
+    print(f"Manifest path: {settings.manifest_path}")
 
 
 def main() -> None:
@@ -212,6 +238,7 @@ def main() -> None:
         print(f"Error: {error}", file=sys.stderr)
         raise SystemExit(1) from error
 
+
 def run_compare(
     text_a: str,
     text_b: str,
@@ -231,18 +258,11 @@ def run_compare(
     print("=" * 80)
     print(f"Text A: {comparison.text_a}")
     print(f"Text B: {comparison.text_b}")
-    print(
-        "Embedding dimension: "
-        f"{comparison.embedding_dimension}"
-    )
-    print(
-        "Cosine similarity: "
-        f"{comparison.similarity:.4f}"
-    )
+    print(f"Embedding dimension: {comparison.embedding_dimension}")
+    print(f"Cosine similarity: {comparison.similarity:.4f}")
 
-    print_similarity_interpretation(
-        comparison.similarity
-    )
+    print_similarity_interpretation(comparison.similarity)
+
 
 def print_similarity_interpretation(
     similarity: float,
@@ -265,6 +285,7 @@ def print_similarity_interpretation(
 
     print(f"Interpretation: {interpretation}")
 
+
 def run_inspect(
     query: str,
     limit: int,
@@ -279,9 +300,7 @@ def run_inspect(
     print(f"Vector magnitude: {vector_magnitude(query_vector):.6f}")
     print("First 10 embedding values:")
 
-    for index, value in enumerate(
-        query_vector[:10]
-    ):
+    for index, value in enumerate(query_vector[:10]):
         print(f"  dimension {index}: {value:.6f}")
 
     print("\nSearching LanceDB...")
@@ -289,6 +308,7 @@ def run_inspect(
         query=query,
         limit=limit,
     )
+
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from enum import StrEnum
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,7 @@ class SearchResult:
     content: str
     distance: float
 
+
 @dataclass(frozen=True)
 class SimilarityComparison:
     text_a: str
@@ -47,3 +49,33 @@ class SimilarityComparison:
     similarity: float
     embedding_dimension: int
 
+
+class DocumentStatus(StrEnum):
+    NEW = "new"
+    CHANGED = "changed"
+    UNCHANGED = "unchanged"
+    DELETED = "deleted"
+
+
+@dataclass(frozen=True)
+class ManifestEntry:
+    source: str
+    document_id: str
+    content_hash: str
+    chunk_count: int
+
+
+@dataclass(frozen=True)
+class DocumentChange:
+    source: str
+    status: DocumentStatus
+    previous_entry: ManifestEntry | None = None
+
+
+@dataclass(frozen=True)
+class IndexingResult:
+    new_documents: int
+    changed_documents: int
+    unchanged_documents: int
+    deleted_documents: int
+    embedded_chunks: int
