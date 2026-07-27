@@ -39,3 +39,11 @@ class SearchResult:
     chunk_index: int
     content: str
     distance: float
+
+@dataclass(frozen=True)
+class SimilarityComparison:
+    text_a: str
+    text_b: str
+    similarity: float
+    embedding_dimension: int
+

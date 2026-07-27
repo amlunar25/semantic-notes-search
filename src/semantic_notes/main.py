@@ -10,7 +10,12 @@ from semantic_notes.ingestion.document_loader import (
 )
 from semantic_notes.ingestion.indexer import NotesIndexer
 from semantic_notes.retrieval.search import SemanticSearchService
-
+from semantic_notes.embeddings.comparator import (
+    TextSimilarityComparator,
+)
+from semantic_notes.embeddings.similarity import (
+    vector_magnitude,
+)
 
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -49,6 +54,41 @@ def create_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "info",
         help="Show the current configuration.",
+    )
+
+    compare_parser = subparsers.add_parser(
+        "compare",
+        help="Compare the semantic similarity of two texts.",
+    )
+
+    compare_parser.add_argument(
+        "text_a",
+        type=str,
+        help="First text.",
+    )
+
+    compare_parser.add_argument(
+        "text_b",
+        type=str,
+        help="Second text.",
+    )
+
+    inspect_parser = subparsers.add_parser(
+        "inspect",
+        help="Inspect a query embedding and its search results.",
+    )
+
+    inspect_parser.add_argument(
+        "query",
+        type=str,
+        help="Query to inspect.",
+    )
+
+    inspect_parser.add_argument(
+        "--limit",
+        type=int,
+        default=settings.search_limit,
+        help="Maximum number of search results.",
     )
 
     return parser
@@ -108,17 +148,19 @@ def run_search(query: str, limit: int) -> None:
         print("No matching notes were found.")
         return
 
-    for position, result in enumerate(results, start=1):
+    for position, result in enumerate(
+        results,
+        start=1,
+    ):
         print("=" * 80)
-        print(f"Result: {position}")
+        print(f"Rank: {position}")
         print(f"Title: {result.title}")
         print(f"Source: {result.source}")
         print(f"Chunk: {result.chunk_index}")
-        print(f"Distance: {result.distance:.4f}")
+        print(f"Vector distance: {result.distance:.4f}")
         print("-" * 80)
         print(result.content)
         print()
-
 
 def run_info() -> None:
     database = connect_database(settings.lancedb_path)
@@ -146,6 +188,16 @@ def main() -> None:
                 query=arguments.query,
                 limit=arguments.limit,
             )
+        elif arguments.command == "compare":
+            run_compare(
+                text_a=arguments.text_a,
+                text_b=arguments.text_b,
+            )
+        elif arguments.command == "inspect":
+            run_inspect(
+                query=arguments.query,
+                limit=arguments.limit,
+            )
         elif arguments.command == "info":
             run_info()
         else:
@@ -160,6 +212,83 @@ def main() -> None:
         print(f"Error: {error}", file=sys.stderr)
         raise SystemExit(1) from error
 
+def run_compare(
+    text_a: str,
+    text_b: str,
+) -> None:
+    encoder = create_encoder()
+
+    comparator = TextSimilarityComparator(
+        encoder=encoder,
+    )
+
+    comparison = comparator.compare(
+        text_a=text_a,
+        text_b=text_b,
+    )
+
+    print("\nSemantic similarity comparison")
+    print("=" * 80)
+    print(f"Text A: {comparison.text_a}")
+    print(f"Text B: {comparison.text_b}")
+    print(
+        "Embedding dimension: "
+        f"{comparison.embedding_dimension}"
+    )
+    print(
+        "Cosine similarity: "
+        f"{comparison.similarity:.4f}"
+    )
+
+    print_similarity_interpretation(
+        comparison.similarity
+    )
+
+def print_similarity_interpretation(
+    similarity: float,
+) -> None:
+    """
+    This interpretation is only educational.
+
+    These thresholds should not be used as production
+    relevance thresholds without evaluation.
+    """
+
+    if similarity >= 0.75:
+        interpretation = "The texts appear strongly related."
+    elif similarity >= 0.50:
+        interpretation = "The texts appear moderately related."
+    elif similarity >= 0.25:
+        interpretation = "The texts may share some meaning."
+    else:
+        interpretation = "The texts appear weakly related."
+
+    print(f"Interpretation: {interpretation}")
+
+def run_inspect(
+    query: str,
+    limit: int,
+) -> None:
+    encoder = create_encoder()
+    query_vector = encoder.encode_query(query)
+
+    print("\nQuery inspection")
+    print("=" * 80)
+    print(f"Query: {query}")
+    print(f"Embedding dimension: {len(query_vector)}")
+    print(f"Vector magnitude: {vector_magnitude(query_vector):.6f}")
+    print("First 10 embedding values:")
+
+    for index, value in enumerate(
+        query_vector[:10]
+    ):
+        print(f"  dimension {index}: {value:.6f}")
+
+    print("\nSearching LanceDB...")
+    run_search(
+        query=query,
+        limit=limit,
+    )
 
 if __name__ == "__main__":
     main()
