@@ -54,3 +54,24 @@ class NotesRepository:
         escaped_source = source.replace("'", "''")
 
         table.delete(f"source = '{escaped_source}'")
+
+    def count_by_source(
+        self,
+        source: str,
+    ) -> int:
+        if not self.table_exists():
+            return 0
+
+        table = self._database.open_table(self._table_name)
+
+        escaped_source = source.replace("'", "''")
+
+        rows = (
+            table.search()
+            .where(f"source = '{escaped_source}'")
+            .select(["chunk_id"])
+            .limit(100_000)
+            .to_list()
+        )
+
+        return len(rows)

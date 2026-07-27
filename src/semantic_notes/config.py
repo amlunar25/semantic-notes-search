@@ -19,6 +19,8 @@ class Settings(BaseSettings):
 
     search_limit: int = Field(default=5, ge=1, le=50)
 
+    run_journal_path: Path = Path("storage/index_run.json")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

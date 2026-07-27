@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 from enum import StrEnum
+from datetime import datetime
 
 
 @dataclass(frozen=True)
@@ -79,3 +80,20 @@ class IndexingResult:
     unchanged_documents: int
     deleted_documents: int
     embedded_chunks: int
+
+
+class IndexRunStatus(StrEnum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+@dataclass(frozen=True)
+class IndexRun:
+    run_id: str
+    status: IndexRunStatus
+    started_at: datetime
+    completed_at: datetime | None
+    current_source: str | None
+    processed_documents: int
+    error_message: str | None = None

@@ -25,6 +25,9 @@ from semantic_notes.ingestion.change_detector import (
 from semantic_notes.ingestion.manifest import (
     ManifestRepository,
 )
+from semantic_notes.ingestion.run_journal import (
+    IndexRunJournal,
+)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -69,6 +72,11 @@ def create_parser() -> argparse.ArgumentParser:
     compare_parser = subparsers.add_parser(
         "compare",
         help="Compare the semantic similarity of two texts.",
+    )
+
+    subparsers.add_parser(
+        "status",
+        help="Show the latest indexing run status.",
     )
 
     compare_parser.add_argument(
@@ -130,9 +138,14 @@ def run_index() -> None:
 
     change_detector = DocumentChangeDetector()
 
+    run_journal = IndexRunJournal(
+        journal_path=settings.run_journal_path,
+    )
+
     indexer = NotesIndexer(
         notes_repository=notes_repository,
         manifest_repository=manifest_repository,
+        run_journal=run_journal,
         encoder=encoder,
         loader=loader,
         chunker=chunker,
@@ -200,6 +213,7 @@ def run_info() -> None:
     print(f"Chunk overlap: {settings.chunk_overlap}")
     print(f"Default search limit: {settings.search_limit}")
     print(f"Manifest path: {settings.manifest_path}")
+    print(f"Run journal path: {settings.run_journal_path}")
 
 
 def main() -> None:
@@ -226,6 +240,8 @@ def main() -> None:
             )
         elif arguments.command == "info":
             run_info()
+        elif arguments.command == "status":
+            run_status()
         else:
             parser.error(f"Unknown command: {arguments.command}")
 
@@ -308,6 +324,28 @@ def run_inspect(
         query=query,
         limit=limit,
     )
+
+
+def run_status() -> None:
+    journal = IndexRunJournal(
+        journal_path=settings.run_journal_path,
+    )
+
+    run = journal.load()
+
+    if run is None:
+        print("No indexing run has been recorded.")
+        return
+
+    print("\nLatest indexing run")
+    print("=" * 60)
+    print(f"Run ID: {run.run_id}")
+    print(f"Status: {run.status.value}")
+    print(f"Started: {run.started_at.isoformat()}")
+    print(f"Completed: {run.completed_at.isoformat() if run.completed_at else '-'}")
+    print(f"Processed documents: {run.processed_documents}")
+    print(f"Current source: {run.current_source or '-'}")
+    print(f"Error: {run.error_message or '-'}")
 
 
 if __name__ == "__main__":

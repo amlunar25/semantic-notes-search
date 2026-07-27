@@ -24,7 +24,11 @@ from semantic_notes.models import (
     DocumentChunk,
     DocumentStatus,
     IndexingResult,
+    IndexRun,
     ManifestEntry,
+)
+from semantic_notes.ingestion.run_journal import (
+    IndexRunJournal,
 )
 
 
@@ -49,6 +53,7 @@ class NotesIndexer:
         self,
         notes_repository: NotesRepository,
         manifest_repository: ManifestRepository,
+        run_journal: IndexRunJournal,
         encoder: EmbeddingEncoder,
         loader: MarkdownDocumentLoader,
         chunker: TextChunker,
@@ -56,6 +61,7 @@ class NotesIndexer:
     ) -> None:
         self._notes_repository = notes_repository
         self._manifest_repository = manifest_repository
+        self._run_journal = run_journal
         self._encoder = encoder
         self._loader = loader
         self._chunker = chunker
@@ -64,6 +70,33 @@ class NotesIndexer:
     def index_directory(
         self,
         notes_directory: Path,
+    ) -> IndexingResult:
+        run = self._run_journal.start()
+
+        try:
+            result = self._execute_indexing(
+                notes_directory=notes_directory,
+                initial_run=run,
+            )
+
+            self._run_journal.complete(self._run_journal.load() or run)
+
+            return result
+
+        except Exception as error:
+            current_run = self._run_journal.load() or run
+
+            self._run_journal.fail(
+                current_run,
+                error,
+            )
+
+            raise
+
+    def _execute_indexing(
+        self,
+        notes_directory: Path,
+        initial_run: IndexRun,
     ) -> IndexingResult:
         documents = self._loader.load_directory(notes_directory)
 
@@ -79,6 +112,7 @@ class NotesIndexer:
         }
 
         next_manifest = dict(previous_manifest)
+        run = initial_run
 
         new_count = 0
         changed_count = 0
@@ -87,8 +121,15 @@ class NotesIndexer:
         embedded_chunks = 0
 
         for change in changes:
+            run = self._run_journal.mark_processing(
+                run=run,
+                source=change.source,
+            )
+
             if change.status == DocumentStatus.UNCHANGED:
                 unchanged_count += 1
+
+                run = self._run_journal.mark_document_completed(run)
                 continue
 
             if change.status == DocumentStatus.DELETED:
@@ -100,21 +141,30 @@ class NotesIndexer:
                 )
 
                 deleted_count += 1
+
+                run = self._run_journal.mark_document_completed(run)
                 continue
 
             document = documents_by_source[change.source]
 
             if change.status == DocumentStatus.CHANGED:
-                self._notes_repository.delete_by_source(change.source)
                 changed_count += 1
 
             elif change.status == DocumentStatus.NEW:
                 new_count += 1
 
+            self._notes_repository.delete_by_source(change.source)
+
             chunks = self._chunker.split_document(document)
+
             rows = self._create_rows(chunks)
 
             self._write_rows(rows)
+
+            self._validate_document_write(
+                source=change.source,
+                expected_chunk_count=len(chunks),
+            )
 
             next_manifest[change.source] = self._create_manifest_entry(
                 document=document,
@@ -122,6 +172,8 @@ class NotesIndexer:
             )
 
             embedded_chunks += len(chunks)
+
+            run = self._run_journal.mark_document_completed(run)
 
         self._manifest_repository.save(next_manifest)
 
@@ -188,3 +240,18 @@ class NotesIndexer:
             content_hash=calculate_content_hash(document),
             chunk_count=len(chunks),
         )
+
+    def _validate_document_write(
+        self,
+        source: str,
+        expected_chunk_count: int,
+    ) -> None:
+        actual_chunk_count = self._notes_repository.count_by_source(source)
+
+        if actual_chunk_count != expected_chunk_count:
+            raise RuntimeError(
+                "Document indexing validation failed. "
+                f"Source: {source}. "
+                f"Expected chunks: {expected_chunk_count}. "
+                f"Actual chunks: {actual_chunk_count}."
+            )
