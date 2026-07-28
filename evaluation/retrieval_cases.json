@@ -1,0 +1,52 @@
+[
+  {
+    "case_id": "spark-watermarks-late-data",
+    "query": "How does Spark handle late-arriving records?",
+    "expected_sources": [
+      "data/notes/spark-watermarks.md"
+    ]
+  },
+  {
+    "case_id": "spark-watermarks-state",
+    "query": "How can Spark remove old streaming state?",
+    "expected_sources": [
+      "data/notes/spark-watermarks.md"
+    ]
+  },
+  {
+    "case_id": "spark-checkpoint-recovery",
+    "query": "How can a streaming query recover after restarting?",
+    "expected_sources": [
+      "data/notes/spark-checkpoints.md"
+    ]
+  },
+  {
+    "case_id": "kafka-offset-recovery",
+    "query": "How does a Kafka consumer continue from its previous position?",
+    "expected_sources": [
+      "data/notes/kafka-offsets.md"
+    ]
+  },
+  {
+    "case_id": "airflow-api-retries",
+    "query": "What should an Airflow task do when an API temporarily fails?",
+    "expected_sources": [
+      "data/notes/airflow-retries.md"
+    ]
+  },
+  {
+    "case_id": "snowflake-pruning",
+    "query": "How can Snowflake avoid scanning irrelevant data?",
+    "expected_sources": [
+      "data/notes/snowflake-clustering.md"
+    ]
+  },
+  {
+    "case_id": "stream-recovery-multiple",
+    "query": "What helps a streaming application continue after a failure?",
+    "expected_sources": [
+      "data/notes/spark-checkpoints.md",
+      "data/notes/kafka-offsets.md"
+    ]
+  }
+]

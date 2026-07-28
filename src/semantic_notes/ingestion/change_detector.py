@@ -19,6 +19,7 @@ class DocumentChangeDetector:
         self,
         documents: list[Document],
         previous_manifest: dict[str, ManifestEntry],
+        current_index_signature: str,
     ) -> list[DocumentChange]:
         changes: list[DocumentChange] = []
         current_sources: set[str] = set()
@@ -40,7 +41,16 @@ class DocumentChangeDetector:
                 )
                 continue
 
-            if previous_entry.content_hash != current_hash:
+            content_changed = (
+                previous_entry.content_hash != current_hash
+            )
+
+            index_configuration_changed = (
+                previous_entry.index_signature
+                != current_index_signature
+            )
+
+            if content_changed or index_configuration_changed:
                 changes.append(
                     DocumentChange(
                         source=source,

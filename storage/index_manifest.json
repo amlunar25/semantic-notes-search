@@ -2,26 +2,31 @@
   "data/notes/airflow-retries.md": {
     "chunk_count": 1,
     "content_hash": "1b0a9efccaeb9ce96411b16e5e458d96cb195f62ba452beeee074884d3463f2d",
-    "document_id": "62acb5e4969e3699"
+    "document_id": "62acb5e4969e3699",
+    "index_signature": "54e32d5562ed9879626c90ad4e7685322e1e83b9ecc243c2394973c67089ddd6"
   },
   "data/notes/kafka-offsets.md": {
     "chunk_count": 1,
     "content_hash": "38017b0dc94d01ebe9a570ee3bbd10c488e296b9c1dc43943de188157605f9b6",
-    "document_id": "d050c911bf289759"
+    "document_id": "d050c911bf289759",
+    "index_signature": "54e32d5562ed9879626c90ad4e7685322e1e83b9ecc243c2394973c67089ddd6"
   },
   "data/notes/snowflake-clustering.md": {
     "chunk_count": 1,
     "content_hash": "12e64b093dabbe8b2942bae79252e0bd3ce1c5165781fe200f1e124d14949de3",
-    "document_id": "9c17ba2088580c52"
+    "document_id": "9c17ba2088580c52",
+    "index_signature": "54e32d5562ed9879626c90ad4e7685322e1e83b9ecc243c2394973c67089ddd6"
   },
   "data/notes/spark-checkpoints.md": {
     "chunk_count": 1,
     "content_hash": "c55933979d8edad5ea47e983ad25a56b5cb5543482b388b31f78bf4f3d23489e",
-    "document_id": "ad7984bdb35174a1"
+    "document_id": "ad7984bdb35174a1",
+    "index_signature": "54e32d5562ed9879626c90ad4e7685322e1e83b9ecc243c2394973c67089ddd6"
   },
   "data/notes/spark-watermarks.md": {
     "chunk_count": 2,
     "content_hash": "94a8d256577a024248d4b73400b00dcb86d6160d26ceb022a641828e25aee4cd",
-    "document_id": "d77cabd21217f635"
+    "document_id": "d77cabd21217f635",
+    "index_signature": "54e32d5562ed9879626c90ad4e7685322e1e83b9ecc243c2394973c67089ddd6"
   }
 }

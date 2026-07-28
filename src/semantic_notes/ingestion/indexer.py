@@ -58,6 +58,7 @@ class NotesIndexer:
         loader: MarkdownDocumentLoader,
         chunker: TextChunker,
         change_detector: DocumentChangeDetector,
+        index_signature: str,
     ) -> None:
         self._notes_repository = notes_repository
         self._manifest_repository = manifest_repository
@@ -66,6 +67,7 @@ class NotesIndexer:
         self._loader = loader
         self._chunker = chunker
         self._change_detector = change_detector
+        self._index_signature = index_signature
 
     def index_directory(
         self,
@@ -105,6 +107,9 @@ class NotesIndexer:
         changes = self._change_detector.detect(
             documents=documents,
             previous_manifest=previous_manifest,
+            current_index_signature=(
+                self._index_signature
+            ),
         )
 
         documents_by_source = {
@@ -226,18 +231,25 @@ class NotesIndexer:
 
         return rows
 
-    @staticmethod
     def _create_manifest_entry(
+        self,
         document: Document,
         chunks: list[DocumentChunk],
     ) -> ManifestEntry:
         if not chunks:
-            raise ValueError("A document must produce at least one chunk.")
+            raise ValueError(
+                "A document must produce at least one chunk."
+            )
 
         return ManifestEntry(
-            source=normalize_source_path(document.source_path),
+            source=normalize_source_path(
+                document.source_path
+            ),
             document_id=chunks[0].document_id,
-            content_hash=calculate_content_hash(document),
+            content_hash=calculate_content_hash(
+                document
+            ),
+            index_signature=self._index_signature,
             chunk_count=len(chunks),
         )
 

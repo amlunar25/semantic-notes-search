@@ -1,9 +1,9 @@
 {
-  "completed_at": "2026-07-27T21:22:30.362149+00:00",
+  "completed_at": "2026-07-28T20:34:46.046374+00:00",
   "current_source": null,
   "error_message": null,
   "processed_documents": 5,
-  "run_id": "c30190ab-c6c1-49b4-a2c5-93d9da8f6265",
-  "started_at": "2026-07-27T21:22:30.358328+00:00",
+  "run_id": "457198dc-c8fc-4de4-ac76-e2ed7f4d5e62",
+  "started_at": "2026-07-28T20:34:46.041780+00:00",
   "status": "completed"
 }

@@ -63,8 +63,8 @@ class ManifestEntry:
     source: str
     document_id: str
     content_hash: str
+    index_signature: str
     chunk_count: int
-
 
 @dataclass(frozen=True)
 class DocumentChange:
@@ -97,3 +97,32 @@ class IndexRun:
     current_source: str | None
     processed_documents: int
     error_message: str | None = None
+
+
+@dataclass(frozen=True)
+class EvaluationCase:
+    case_id: str
+    query: str
+    expected_sources: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class EvaluationCaseResult:
+    case_id: str
+    query: str
+    expected_sources: tuple[str, ...]
+    retrieved_sources: tuple[str, ...]
+    first_relevant_rank: int | None
+    hit: bool
+    recall: float
+    reciprocal_rank: float
+
+
+@dataclass(frozen=True)
+class EvaluationSummary:
+    total_cases: int
+    successful_cases: int
+    hit_rate: float
+    mean_recall: float
+    mean_reciprocal_rank: float
+    case_results: tuple[EvaluationCaseResult, ...]

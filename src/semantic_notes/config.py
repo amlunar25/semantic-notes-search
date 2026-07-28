@@ -21,6 +21,14 @@ class Settings(BaseSettings):
 
     run_journal_path: Path = Path("storage/index_run.json")
 
+    evaluation_dataset_path: Path = Path("evaluation/retrieval_cases.json")
+
+    evaluation_limit: int = Field(
+        default=5,
+        ge=1,
+        le=50,
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
