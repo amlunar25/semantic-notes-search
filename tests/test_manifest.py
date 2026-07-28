@@ -11,9 +11,9 @@ def test_missing_manifest_returns_empty_dictionary(
 ) -> None:
     repository = ManifestRepository(tmp_path / "manifest.json")
 
-    result = repository.load()
+    manifest = repository.load()
 
-    assert result == {}
+    assert manifest == {}
 
 
 def test_save_and_load_manifest(
@@ -23,17 +23,22 @@ def test_save_and_load_manifest(
 
     repository = ManifestRepository(manifest_path)
 
-    entries = {
-        "data/notes/spark.md": ManifestEntry(
-            source="data/notes/spark.md",
-            document_id="document-123",
-            content_hash="hash-123",
-            chunk_count=2,
-        )
+    entry = ManifestEntry(
+        source="data/notes/spark.md",
+        document_id="document-1",
+        content_hash="content-hash-1",
+        index_signature="test-index-signature",
+        chunk_count=3,
+    )
+
+    repository.save(
+        {
+            entry.source: entry,
+        }
+    )
+
+    loaded_manifest = repository.load()
+
+    assert loaded_manifest == {
+        entry.source: entry,
     }
-
-    repository.save(entries)
-
-    loaded_entries = repository.load()
-
-    assert loaded_entries == entries

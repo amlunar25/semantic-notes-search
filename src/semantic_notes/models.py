@@ -66,6 +66,7 @@ class ManifestEntry:
     index_signature: str
     chunk_count: int
 
+
 @dataclass(frozen=True)
 class DocumentChange:
     source: str
@@ -126,3 +127,25 @@ class EvaluationSummary:
     mean_recall: float
     mean_reciprocal_rank: float
     case_results: tuple[EvaluationCaseResult, ...]
+
+
+@dataclass(frozen=True)
+class ContextItem:
+    source: str
+    title: str
+    chunk_index: int
+    content: str
+
+
+@dataclass(frozen=True)
+class RagContext:
+    items: tuple[ContextItem, ...]
+    combined_text: str
+
+
+@dataclass(frozen=True)
+class RagAnswer:
+    question: str
+    answer: str
+    sources: tuple[str, ...]
+    context: RagContext

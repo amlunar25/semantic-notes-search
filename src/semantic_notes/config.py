@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Literal
 
 
 class Settings(BaseSettings):
@@ -34,6 +35,28 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+    )
+
+    openai_api_key: SecretStr | None = None
+
+    openai_model: str = "gpt-5.5"
+
+    openai_timeout_seconds: float = Field(
+        default=60.0,
+        gt=0,
+        le=300,
+    )
+
+    llm_provider: Literal["ollama", "openai"] = "ollama"
+
+    ollama_host: str = "http://localhost:11434"
+
+    ollama_model: str = "qwen3:8b"
+
+    ollama_timeout_seconds: float = Field(
+        default=120.0,
+        gt=0,
+        le=600,
     )
 
     @model_validator(mode="after")

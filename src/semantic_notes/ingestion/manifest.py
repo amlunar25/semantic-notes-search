@@ -32,9 +32,7 @@ class ManifestRepository:
                 document_id=str(value["document_id"]),
                 content_hash=str(value["content_hash"]),
                 chunk_count=int(value["chunk_count"]),
-                index_signature=str(
-                    value.get("index_signature", "")
-                ),
+                index_signature=str(value.get("index_signature", "")),
             )
 
         return entries

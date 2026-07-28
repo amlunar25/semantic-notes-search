@@ -39,6 +39,19 @@ from semantic_notes.models import EvaluationSummary
 from semantic_notes.ingestion.index_signature import (
     create_index_signature,
 )
+from semantic_notes.rag.context_builder import (
+    ContextBuilder,
+)
+from semantic_notes.rag.preparation import (
+    RagPreparationService,
+)
+from semantic_notes.rag.prompt_builder import (
+    RagPromptBuilder,
+)
+from semantic_notes.llm.factory import (
+    create_language_model,
+)
+from semantic_notes.rag.service import RagService
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -151,7 +164,66 @@ def create_parser() -> argparse.ArgumentParser:
         help="Maximum number of search results.",
     )
 
+    prepare_rag_parser = subparsers.add_parser(
+        "prepare-rag",
+        help="Retrieve context and display the RAG prompt.",
+    )
+
+    prepare_rag_parser.add_argument(
+        "question",
+        type=str,
+        help="Question to prepare for RAG.",
+    )
+
+    prepare_rag_parser.add_argument(
+        "--limit",
+        type=int,
+        default=settings.search_limit,
+        help="Maximum number of context chunks.",
+    )
+
+    ask_parser = subparsers.add_parser(
+        "ask",
+        help="Ask a grounded question about indexed notes.",
+    )
+
+    ask_parser.add_argument(
+        "question",
+        type=str,
+        help="Question to answer using indexed notes.",
+    )
+
+    ask_parser.add_argument(
+        "--limit",
+        type=int,
+        default=settings.search_limit,
+        help="Maximum number of context chunks.",
+    )
+
+    ask_parser.add_argument(
+        "--show-context",
+        action="store_true",
+        help="Display the retrieved context.",
+    )
     return parser
+
+
+def create_rag_preparation_service() -> RagPreparationService:
+    database = connect_database(settings.lancedb_path)
+
+    encoder = create_encoder()
+
+    search_service = SemanticSearchService(
+        database=database,
+        encoder=encoder,
+        table_name=settings.lancedb_table,
+    )
+
+    return RagPreparationService(
+        search_service=search_service,
+        context_builder=ContextBuilder(),
+        prompt_builder=RagPromptBuilder(),
+    )
 
 
 def create_encoder() -> EmbeddingEncoder:
@@ -297,6 +369,17 @@ def main() -> None:
                 limit=arguments.limit,
                 show_failures=arguments.show_failures,
                 show_all=arguments.show_all,
+            )
+        elif arguments.command == "prepare-rag":
+            run_prepare_rag(
+                question=arguments.question,
+                limit=arguments.limit,
+            )
+        elif arguments.command == "ask":
+            run_ask(
+                question=arguments.question,
+                limit=arguments.limit,
+                show_context=arguments.show_context,
             )
         else:
             parser.error(f"Unknown command: {arguments.command}")
@@ -500,6 +583,70 @@ def print_evaluation_cases(
             marker = "✓" if source in result.expected_sources else " "
 
             print(f"  {rank}. [{marker}] {source}")
+
+
+def run_prepare_rag(
+    question: str,
+    limit: int,
+) -> None:
+    preparation_service = create_rag_preparation_service()
+
+    prepared_request = preparation_service.prepare(
+        question=question,
+        limit=limit,
+    )
+
+    print("\nRetrieved sources")
+    print("=" * 70)
+
+    for position, item in enumerate(
+        prepared_request.context.items,
+        start=1,
+    ):
+        print(f"{position}. {item.title} ({item.source}, chunk {item.chunk_index})")
+
+    print("\nGenerated prompt")
+    print("=" * 70)
+    print(prepared_request.prompt)
+
+
+def run_ask(
+    question: str,
+    limit: int,
+    show_context: bool,
+) -> None:
+    preparation_service = create_rag_preparation_service()
+
+    language_model = create_language_model(settings)
+
+    rag_service = RagService(
+        preparation_service=preparation_service,
+        language_model=language_model,
+    )
+
+    result = rag_service.answer(
+        question=question,
+        limit=limit,
+    )
+
+    print("\nAnswer")
+    print("=" * 70)
+    print(result.answer)
+
+    if result.sources:
+        print("\nSources")
+        print("=" * 70)
+
+        for position, source in enumerate(
+            result.sources,
+            start=1,
+        ):
+            print(f"{position}. {source}")
+
+    if show_context:
+        print("\nRetrieved context")
+        print("=" * 70)
+        print(result.context.combined_text or "No context retrieved.")
 
 
 if __name__ == "__main__":
